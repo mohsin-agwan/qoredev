@@ -19,6 +19,7 @@ High-performance, minimalist infrastructure for modern developers, powered by an
 - **Vector Database** — PostgreSQL with pgvector for semantic search and embeddings
 - **AI Copilot** — Autonomous assistant with a "Stuck mode" that breaks problems down step by step
 - **Protected Routes** — Middleware-based session management redirecting unauthenticated users
+- **Auto-Deploy Watcher** — Manifest-driven deployer that pushes to Railway and Vercel on file save
 
 ## Local Setup
 
@@ -102,6 +103,9 @@ src/
         ├── server.ts   # Server Component client
         └── middleware.ts
 middleware.ts            # Auth guard for /dashboard
+scripts/
+└── deploy-watcher.js    # Auto-deployer (npm run deploy:watch)
+qf-manifest.json         # Deployment manifest / feature flags
 supabase/
 ├── migrations/00001_init.sql
 └── seed.sql
@@ -121,6 +125,37 @@ supabase/
 2. Add environment variables in the Railway dashboard.
 3. Railway uses `railway.toml` to build with Nixpacks and start with `npm run start`.
 4. The `/api/health` endpoint is used as the health check path.
+
+## Auto-Deploy Watcher
+
+QoreDev includes a manifest-driven auto-deployer that watches `qf-manifest.json` and triggers Railway + Vercel deployments on every save.
+
+### `qf-manifest.json`
+
+```json
+{
+  "project": {
+    "name": "QoreDev",
+    "description": "The AI-Native Backend OS",
+    "contact": "support@qoredev.io"
+  },
+  "magic_toggles": {
+    "database": {
+      "auto_migrations": false
+    }
+  }
+}
+```
+
+Set `magic_toggles.database.auto_migrations` to `true` to automatically run `npx prisma migrate deploy` before each deployment.
+
+### Start the watcher
+
+```bash
+npm run deploy:watch
+```
+
+The watcher requires the [Railway CLI](https://docs.railway.app/guides/cli) and [Vercel CLI](https://vercel.com/docs/cli) to be installed and authenticated.
 
 ## API Reference
 
