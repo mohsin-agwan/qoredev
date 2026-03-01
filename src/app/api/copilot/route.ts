@@ -15,6 +15,8 @@ When a developer is stuck, you:
 5. Suggest what to verify after each step.
 Be thorough, encouraging, and precise.`;
 
+const MAX_QUERY_LENGTH = 4000;
+
 export async function POST(request: Request) {
   const supabase = await createClient();
 
@@ -37,6 +39,13 @@ export async function POST(request: Request) {
 
   if (!query || typeof query !== "string" || query.trim().length === 0) {
     return NextResponse.json({ error: "query is required" }, { status: 400 });
+  }
+
+  if (query.trim().length > MAX_QUERY_LENGTH) {
+    return NextResponse.json(
+      { error: `query must be ${MAX_QUERY_LENGTH} characters or fewer` },
+      { status: 400 }
+    );
   }
 
   try {
