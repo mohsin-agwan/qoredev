@@ -16,6 +16,11 @@ export default function DashboardPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  const [paymentAmount, setPaymentAmount] = useState("");
+  const [paymentResult, setPaymentResult] = useState<string | null>(null);
+  const [paymentError, setPaymentError] = useState<string | null>(null);
+  const [paymentLoading, setPaymentLoading] = useState(false);
+
   async function handleSignOut() {
     await supabase.auth.signOut();
     router.push("/login");
@@ -48,6 +53,39 @@ export default function DashboardPage() {
       setError("Network error. Please try again.");
     } finally {
       setLoading(false);
+    }
+  }
+
+  async function handlePayment(e: React.FormEvent) {
+    e.preventDefault();
+    const amount = Number(paymentAmount);
+    if (!amount || amount <= 0) {
+      setPaymentError("Please enter a valid amount greater than zero.");
+      return;
+    }
+
+    setPaymentLoading(true);
+    setPaymentError(null);
+    setPaymentResult(null);
+
+    try {
+      const res = await fetch("/api/connectors/payments", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ amount }),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        setPaymentError(data.error ?? "Payment failed.");
+      } else {
+        setPaymentResult(JSON.stringify(data, null, 2));
+      }
+    } catch {
+      setPaymentError("Network error. Please try again.");
+    } finally {
+      setPaymentLoading(false);
     }
   }
 
@@ -118,6 +156,60 @@ export default function DashboardPage() {
           {response && (
             <div className="mt-6 p-4 bg-gray-800 border border-gray-700 rounded-lg text-sm text-gray-200 whitespace-pre-wrap leading-relaxed">
               {response}
+            </div>
+          )}
+        </section>
+
+        <section className="mt-8 bg-gray-900 border border-gray-800 rounded-xl p-6">
+          <h2 className="text-lg font-semibold text-white mb-1">
+            Universal Payment Connector
+          </h2>
+          <p className="text-sm text-gray-400 mb-1">
+            Powered by{" "}
+            <code className="text-indigo-400 text-xs bg-gray-800 px-1.5 py-0.5 rounded">
+              QoreConnector
+            </code>{" "}
+            — one interface for Stripe, PayPal, and Razorpay.
+          </p>
+          <p className="text-xs text-gray-500 mb-6">
+            Enable providers via manifest toggles (
+            <code className="text-gray-400">QORE_PAYMENTS_STRIPE_ENABLED=true</code>
+            , etc.).
+          </p>
+
+          <form onSubmit={handlePayment} className="flex items-end gap-3">
+            <div className="flex-1">
+              <label className="block text-xs text-gray-400 mb-1">
+                Amount (USD)
+              </label>
+              <input
+                type="number"
+                min="0.01"
+                step="0.01"
+                value={paymentAmount}
+                onChange={(e) => setPaymentAmount(e.target.value)}
+                placeholder="e.g. 49.99"
+                className="w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-2.5 text-sm text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+              />
+            </div>
+            <button
+              type="submit"
+              disabled={paymentLoading || !paymentAmount || Number(paymentAmount) <= 0}
+              className="bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50 text-white font-semibold px-6 py-2.5 rounded-lg transition-colors text-sm whitespace-nowrap"
+            >
+              {paymentLoading ? "Processing…" : "Process Payment"}
+            </button>
+          </form>
+
+          {paymentError && (
+            <div className="mt-4 p-4 bg-red-900/30 border border-red-800 rounded-lg text-sm text-red-300">
+              {paymentError}
+            </div>
+          )}
+
+          {paymentResult && (
+            <div className="mt-4 p-4 bg-gray-800 border border-gray-700 rounded-lg text-xs text-green-300 font-mono whitespace-pre-wrap leading-relaxed">
+              {paymentResult}
             </div>
           )}
         </section>
