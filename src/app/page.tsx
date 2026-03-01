@@ -166,16 +166,12 @@ export default function HomePage() {
       {/* CTA */}
       <section className="px-6 py-24">
         <div className="max-w-2xl mx-auto">
-          <div className="relative bg-gray-900 border border-gray-800 rounded-2xl p-12 text-center overflow-hidden">
-            <div className="absolute inset-0 bg-gradient-to-br from-indigo-950/40 to-violet-950/20 pointer-events-none rounded-2xl" />
-            <div className="absolute inset-0 rounded-2xl" style={{ background: "linear-gradient(to right, #4f46e5, #7c3aed)", padding: "1px", WebkitMask: "linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0)", WebkitMaskComposite: "xor", maskComposite: "exclude" }} />
-            <div className="relative">
-              <h2 className="text-3xl font-bold text-white mb-3">Ready to build?</h2>
-              <p className="text-gray-400 mb-8">Start your project today. No credit card required.</p>
-              <Link href="/register" className="inline-block bg-indigo-600 hover:bg-indigo-500 text-white font-semibold px-10 py-3.5 rounded-xl transition-colors shadow-lg shadow-indigo-500/25">
-                Get Started — it&apos;s free
-              </Link>
-            </div>
+          <div className="bg-gradient-to-br from-indigo-950/40 to-violet-950/20 border border-indigo-700/50 rounded-2xl p-12 text-center">
+            <h2 className="text-3xl font-bold text-white mb-3">Ready to build?</h2>
+            <p className="text-gray-400 mb-8">Start your project today. No credit card required.</p>
+            <Link href="/register" className="inline-block bg-indigo-600 hover:bg-indigo-500 text-white font-semibold px-10 py-3.5 rounded-xl transition-colors shadow-lg shadow-indigo-500/25">
+              Get Started — it&apos;s free
+            </Link>
           </div>
         </div>
       </section>

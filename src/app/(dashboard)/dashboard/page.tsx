@@ -416,10 +416,12 @@ export default function DashboardPage() {
         </aside>
 
         {/* Mobile tabs */}
-        <div className="md:hidden w-full border-b border-gray-800 flex overflow-x-auto bg-gray-950 px-4">
+        <div role="tablist" aria-orientation="horizontal" className="md:hidden w-full border-b border-gray-800 flex overflow-x-auto bg-gray-950 px-4">
           {navItems.map((item) => (
             <button
               key={item.id}
+              role="tab"
+              aria-selected={activeTab === item.id}
               onClick={() => setActiveTab(item.id)}
               className={`flex items-center gap-1.5 px-3 py-3 text-xs font-medium whitespace-nowrap border-b-2 transition-colors ${
                 activeTab === item.id
