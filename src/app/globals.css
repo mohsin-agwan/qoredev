@@ -15,3 +15,38 @@ body {
   background-color: var(--background);
   color: var(--foreground);
 }
+
+@layer utilities {
+  .gradient-text {
+    @apply bg-clip-text text-transparent bg-gradient-to-r from-indigo-400 via-violet-400 to-purple-400;
+  }
+
+  .glow-indigo {
+    box-shadow: 0 0 40px -10px rgba(99, 102, 241, 0.5);
+  }
+
+  .card-glass {
+    @apply bg-gray-900/60 border border-gray-800/80 backdrop-blur-sm;
+  }
+
+  .hero-grid-bg {
+    background-image:
+      linear-gradient(rgba(99, 102, 241, 0.06) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(99, 102, 241, 0.06) 1px, transparent 1px);
+    background-size: 48px 48px;
+  }
+
+  .animate-fade-in {
+    animation: fadeIn 0.6s ease-out both;
+  }
+
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(16px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  .animate-delay-100 { animation-delay: 0.1s; }
+  .animate-delay-200 { animation-delay: 0.2s; }
+  .animate-delay-300 { animation-delay: 0.3s; }
+  .animate-delay-400 { animation-delay: 0.4s; }
+}
