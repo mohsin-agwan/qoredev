@@ -2,8 +2,6 @@ import { NextResponse } from "next/server";
 import OpenAI from "openai";
 import { createClient } from "@/lib/supabase/server";
 
-const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
-
 const SYSTEM_PROMPT = `You are QoreDev Copilot, an expert AI assistant for backend development.
 You help developers with architecture decisions, code reviews, database design, and API patterns.
 Be concise, practical, and actionable.`;
@@ -42,6 +40,7 @@ export async function POST(request: Request) {
   }
 
   try {
+    const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
     const completion = await openai.chat.completions.create({
       model: "gpt-4o-mini",
       messages: [
