@@ -1,0 +1,3 @@
+-- Seed file for QoreDev
+-- Add sample data below for local development and testing.
+-- Example: INSERT INTO public.profiles (id, email, full_name) VALUES (...);
