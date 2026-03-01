@@ -16,6 +16,11 @@ const features = [
     description:
       "Autonomous AI assistant with a 'stuck' mode that breaks down complex problems step by step.",
   },
+  {
+    title: "Auto-Deploy Watcher",
+    description:
+      "Manifest-driven deployer that pushes to Railway and Vercel whenever qf-manifest.json is saved.",
+  },
 ];
 
 export default function HomePage() {
