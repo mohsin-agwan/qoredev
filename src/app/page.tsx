@@ -16,6 +16,21 @@ const features = [
     description:
       "Autonomous AI assistant with a 'stuck' mode that breaks down complex problems step by step.",
   },
+  {
+    title: "Universal Connectors",
+    description:
+      "One QoreConnector interface to rule all providers in a category — payments, storage, email, and more. Toggle providers via manifest flags without changing a line of business logic.",
+  },
+  {
+    title: "Auto-Deploy Watcher",
+    description:
+      "Manifest-driven deployer that pushes to Railway and Vercel whenever qf-manifest.json is saved.",
+  },
+  {
+    title: "Quantum Canvas",
+    description:
+      "Visually connect your database entities. Drag nodes and draw edges to establish relational links — auto-generates SQL migrations.",
+  },
 ];
 
 export default function HomePage() {
