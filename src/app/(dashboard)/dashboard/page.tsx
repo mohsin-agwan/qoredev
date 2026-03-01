@@ -5,6 +5,7 @@ export const dynamic = "force-dynamic";
 import { useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { useRouter } from "next/navigation";
+import QoreConsole from "@/components/QoreConsole";
 
 export default function DashboardPage() {
   const router = useRouter();
@@ -121,6 +122,10 @@ export default function DashboardPage() {
             </div>
           )}
         </section>
+
+        <div className="mt-8">
+          <QoreConsole />
+        </div>
       </div>
     </main>
   );
