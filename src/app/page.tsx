@@ -16,6 +16,11 @@ const features = [
     description:
       "Autonomous AI assistant with a 'stuck' mode that breaks down complex problems step by step.",
   },
+  {
+    title: "Universal Connectors",
+    description:
+      "One QoreConnector interface to rule all providers in a category — payments, storage, email, and more. Toggle providers via manifest flags without changing a line of business logic.",
+  },
 ];
 
 export default function HomePage() {
