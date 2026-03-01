@@ -1,7 +1,18 @@
 "use client";
 
 import { useState, useCallback } from "react";
-import ReactFlow, { addEdge, Background, Controls, Connection, Edge, Node } from "reactflow";
+import ReactFlow, {
+  addEdge,
+  applyNodeChanges,
+  applyEdgeChanges,
+  Background,
+  Controls,
+  Connection,
+  Edge,
+  Node,
+  NodeChange,
+  EdgeChange,
+} from "reactflow";
 import "reactflow/dist/style.css";
 
 const initialNodes: Node[] = [
@@ -29,8 +40,20 @@ const initialEdges: Edge[] = [
 ];
 
 export default function QuantumCanvas() {
-  const [nodes] = useState<Node[]>(initialNodes);
+  const [nodes, setNodes] = useState<Node[]>(initialNodes);
   const [edges, setEdges] = useState<Edge[]>(initialEdges);
+
+  const onNodesChange = useCallback(
+    (changes: NodeChange[]) =>
+      setNodes((nds) => applyNodeChanges(changes, nds)),
+    []
+  );
+
+  const onEdgesChange = useCallback(
+    (changes: EdgeChange[]) =>
+      setEdges((eds) => applyEdgeChanges(changes, eds)),
+    []
+  );
 
   const onConnect = useCallback(
     (params: Connection) => {
@@ -50,6 +73,8 @@ export default function QuantumCanvas() {
       <ReactFlow
         nodes={nodes}
         edges={edges}
+        onNodesChange={onNodesChange}
+        onEdgesChange={onEdgesChange}
         onConnect={onConnect}
         fitView
       >
