@@ -1,0 +1,16 @@
+{
+  "magic_toggles": {
+    "ai": {
+      "provider": "openai",
+      "enabled": true
+    },
+    "auth": {
+      "provider": "supabase",
+      "enabled": true
+    },
+    "database": {
+      "provider": "supabase",
+      "enabled": true
+    }
+  }
+}
