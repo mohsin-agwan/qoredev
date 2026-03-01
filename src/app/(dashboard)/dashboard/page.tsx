@@ -3,12 +3,73 @@
 export const dynamic = "force-dynamic";
 
 import { useState } from "react";
+import { Settings, Shield, Database, CreditCard, Cpu } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { useRouter } from "next/navigation";
+
+type ToggleKey = "auth" | "database" | "payments" | "ai_copilot";
+
+interface FeatureCardProps {
+  icon: React.ReactNode;
+  title: string;
+  active: boolean;
+  onToggle: () => void;
+}
+
+const FeatureCard = ({ icon, title, active, onToggle }: FeatureCardProps) => (
+  <div className="bg-gray-900 border border-gray-800 rounded-xl p-5 flex items-center justify-between gap-4">
+    <div className="flex items-center gap-3">
+      <span className={active ? "text-indigo-400" : "text-gray-600"}>{icon}</span>
+      <span className="text-sm font-medium text-white">{title}</span>
+    </div>
+    <button
+      onClick={onToggle}
+      aria-label={`Toggle ${title}`}
+      className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-indigo-500 ${
+        active ? "bg-indigo-600" : "bg-gray-700"
+      }`}
+    >
+      <span
+        className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+          active ? "translate-x-6" : "translate-x-1"
+        }`}
+      />
+    </button>
+  </div>
+);
+
+const featureConfig: {
+  key: ToggleKey;
+  icon: React.ReactNode;
+  title: string;
+}[] = [
+  { key: "auth", icon: <Shield size={18} />, title: "Auth" },
+  { key: "database", icon: <Database size={18} />, title: "Database" },
+  { key: "payments", icon: <CreditCard size={18} />, title: "Payments" },
+  { key: "ai_copilot", icon: <Cpu size={18} />, title: "AI Copilot" },
+];
 
 export default function DashboardPage() {
   const router = useRouter();
   const supabase = createClient();
+
+  const [manifest, setManifest] = useState({
+    project: { name: "QoreDev", owner: "Mohsin Agwan" },
+    magic_toggles: {
+      auth: true,
+      database: true,
+      payments: false,
+      ai_copilot: true,
+    },
+  });
+
+  const toggleFeature = (key: ToggleKey) => {
+    setManifest((prev) => ({
+      ...prev,
+      magic_toggles: { ...prev.magic_toggles, [key]: !prev.magic_toggles[key] },
+    }));
+    console.log(`🔮 QoreDev Agent: Re-provisioning ${key}...`);
+  };
 
   const [query, setQuery] = useState("");
   const [stuck, setStuck] = useState(false);
@@ -68,6 +129,31 @@ export default function DashboardPage() {
       <div className="flex-1 max-w-3xl mx-auto w-full px-6 py-12">
         <h1 className="text-3xl font-bold text-white mb-2">Dashboard</h1>
         <p className="text-gray-400 mb-10">Welcome back. Your AI copilot is ready.</p>
+
+        <section className="bg-gray-900 border border-gray-800 rounded-xl p-6 mb-8">
+          <div className="flex items-center gap-2 mb-1">
+            <Settings size={18} className="text-indigo-400" />
+            <h2 className="text-lg font-semibold text-white">Magic Toggles</h2>
+          </div>
+          <p className="text-sm text-gray-400 mb-5">
+            Enable or disable platform features for{" "}
+            <span className="text-indigo-400 font-medium">
+              {manifest.project.name}
+            </span>
+            . Changes trigger the QoreOrchestrator to re-provision your stack.
+          </p>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            {featureConfig.map(({ key, icon, title }) => (
+              <FeatureCard
+                key={key}
+                icon={icon}
+                title={title}
+                active={manifest.magic_toggles[key]}
+                onToggle={() => toggleFeature(key)}
+              />
+            ))}
+          </div>
+        </section>
 
         <section className="bg-gray-900 border border-gray-800 rounded-xl p-6">
           <h2 className="text-lg font-semibold text-white mb-1">AI Copilot</h2>
