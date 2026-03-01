@@ -1,0 +1,12 @@
+{
+  "project": {
+    "name": "QoreDev",
+    "description": "The AI-Native Backend OS",
+    "contact": "support@qoredev.io"
+  },
+  "magic_toggles": {
+    "database": {
+      "auto_migrations": false
+    }
+  }
+}
