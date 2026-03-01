@@ -5,5 +5,6 @@ export async function GET() {
     status: "ok",
     service: "QoreDev",
     version: "0.1.0",
+    timestamp: new Date().toISOString(),
   });
 }
