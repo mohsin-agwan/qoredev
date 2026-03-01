@@ -6,6 +6,7 @@ import { useState } from "react";
 import { Settings, Shield, Database, CreditCard, Cpu } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { useRouter } from "next/navigation";
+import QoreConsole from "@/components/QoreConsole";
 
 type ToggleKey = "auth" | "database" | "payments" | "ai_copilot";
 
@@ -207,6 +208,10 @@ export default function DashboardPage() {
             </div>
           )}
         </section>
+
+        <div className="mt-8">
+          <QoreConsole />
+        </div>
       </div>
     </main>
   );
