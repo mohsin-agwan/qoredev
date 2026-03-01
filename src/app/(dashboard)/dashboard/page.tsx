@@ -3,8 +3,13 @@
 export const dynamic = "force-dynamic";
 
 import { useState } from "react";
+import nextDynamic from "next/dynamic";
 import { createClient } from "@/lib/supabase/client";
 import { useRouter } from "next/navigation";
+
+const QuantumCanvas = nextDynamic(() => import("@/components/QuantumCanvas"), {
+  ssr: false,
+});
 
 export default function DashboardPage() {
   const router = useRouter();
@@ -120,6 +125,17 @@ export default function DashboardPage() {
               {response}
             </div>
           )}
+        </section>
+
+        <section className="mt-10 bg-gray-900 border border-gray-800 rounded-xl p-6">
+          <h2 className="text-lg font-semibold text-white mb-1">
+            Quantum Canvas
+          </h2>
+          <p className="text-sm text-gray-400 mb-4">
+            Visually connect your database entities. Drag nodes and draw edges
+            to establish relational links.
+          </p>
+          <QuantumCanvas />
         </section>
       </div>
     </main>
