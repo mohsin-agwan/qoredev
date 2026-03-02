@@ -10,10 +10,11 @@ const paymentMagic = new QoreConnector({
 export const processUniversalPayment = async (data: {
   amount: number;
   user_id: string;
+  currency?: string;
 }) => {
   return await paymentMagic.execute("createCharge", {
     amount: data.amount,
-    currency: "USD",
+    currency: data.currency ?? "USD",
     customer_id: data.user_id,
   });
 };

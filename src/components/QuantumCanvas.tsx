@@ -14,6 +14,11 @@ import ReactFlow, {
   EdgeChange,
 } from "reactflow";
 import "reactflow/dist/style.css";
+import { Plus, RotateCcw } from "lucide-react";
+
+const NODE_COLORS = [
+  "#1d4ed8", "#7c3aed", "#0f766e", "#b45309", "#be185d",
+];
 
 const initialNodes: Node[] = [
   {
@@ -67,19 +72,62 @@ export default function QuantumCanvas() {
     []
   );
 
+  const handleAddNode = useCallback(() => {
+    const id = String(Date.now());
+    const colorIdx = nodes.length % NODE_COLORS.length;
+    const newNode: Node = {
+      id,
+      position: { x: Math.random() * 300, y: Math.random() * 200 },
+      data: { label: `🗂️ Table ${nodes.length + 1}` },
+      style: {
+        background: NODE_COLORS[colorIdx],
+        color: "#fff",
+        borderRadius: "12px",
+      },
+    };
+    setNodes((nds) => [...nds, newNode]);
+  }, [nodes.length]);
+
+  const handleReset = useCallback(() => {
+    setNodes(initialNodes);
+    setEdges(initialEdges);
+  }, []);
+
   return (
-    <div style={{ width: "100%", height: "400px" }}>
-      <ReactFlow
-        nodes={nodes}
-        edges={edges}
-        onNodesChange={onNodesChange}
-        onEdgesChange={onEdgesChange}
-        onConnect={onConnect}
-        fitView
-      >
-        <Background />
-        <Controls />
-      </ReactFlow>
+    <div>
+      {/* Toolbar */}
+      <div className="flex items-center gap-3 mb-3">
+        <span className="text-xs text-gray-500">
+          {nodes.length} nodes · {edges.length} edges
+        </span>
+        <div className="ml-auto flex gap-2">
+          <button
+            onClick={handleAddNode}
+            className="flex items-center gap-1.5 text-xs bg-indigo-600 hover:bg-indigo-500 text-white font-medium px-3 py-1.5 rounded-lg transition-colors"
+          >
+            <Plus size={13} /> Add Node
+          </button>
+          <button
+            onClick={handleReset}
+            className="flex items-center gap-1.5 text-xs bg-gray-800 hover:bg-gray-700 text-gray-300 hover:text-white font-medium px-3 py-1.5 rounded-lg border border-gray-700 transition-colors"
+          >
+            <RotateCcw size={13} /> Reset
+          </button>
+        </div>
+      </div>
+      <div style={{ width: "100%", height: "400px" }}>
+        <ReactFlow
+          nodes={nodes}
+          edges={edges}
+          onNodesChange={onNodesChange}
+          onEdgesChange={onEdgesChange}
+          onConnect={onConnect}
+          fitView
+        >
+          <Background />
+          <Controls />
+        </ReactFlow>
+      </div>
     </div>
   );
 }
