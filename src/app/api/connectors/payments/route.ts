@@ -13,7 +13,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  let body: { amount?: unknown };
+  let body: { amount?: unknown; currency?: unknown };
   try {
     body = await request.json();
   } catch {
@@ -28,7 +28,12 @@ export async function POST(request: Request) {
     );
   }
 
-  const result = await processUniversalPayment({ amount, user_id: user.id });
+  const currency =
+    typeof body.currency === "string" && body.currency.trim().length > 0
+      ? body.currency.trim().toUpperCase()
+      : "USD";
+
+  const result = await processUniversalPayment({ amount, user_id: user.id, currency });
 
   if (result.status === "error") {
     return NextResponse.json({ error: result.error }, { status: 502 });

@@ -15,6 +15,10 @@ import {
   LogOut,
   Menu,
   X,
+  Copy,
+  CheckCheck,
+  Zap,
+  BarChart3,
 } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { useRouter } from "next/navigation";
@@ -26,51 +30,65 @@ const QuantumCanvas = nextDynamic(() => import("@/components/QuantumCanvas"), {
 
 type ToggleKey = "auth" | "database" | "payments" | "ai_copilot";
 type SectionKey = "overview" | "toggles" | "copilot" | "payments" | "canvas";
+type CurrencyCode = "USD" | "EUR" | "GBP" | "INR";
 
 interface FeatureCardProps {
   icon: React.ReactNode;
   title: string;
+  description: string;
   active: boolean;
   onToggle: () => void;
 }
 
-const FeatureCard = ({ icon, title, active, onToggle }: FeatureCardProps) => (
-  <div className="bg-gray-900 border border-gray-800 rounded-xl p-5 flex items-center justify-between gap-4 hover:border-gray-700 transition-colors">
-    <div className="flex items-center gap-3">
-      <span className={`p-2 rounded-lg ${active ? "bg-indigo-950 text-indigo-400" : "bg-gray-800 text-gray-600"}`}>
-        {icon}
-      </span>
-      <span className="text-sm font-medium text-white">{title}</span>
-    </div>
-    <button
-      onClick={onToggle}
-      aria-label={`Toggle ${title}`}
-      className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-indigo-500 ${
-        active ? "bg-indigo-600" : "bg-gray-700"
-      }`}
-    >
-      <span
-        className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
-          active ? "translate-x-6" : "translate-x-1"
+const FeatureCard = ({ icon, title, description, active, onToggle }: FeatureCardProps) => (
+  <div className="bg-gray-900 border border-gray-800 rounded-xl p-5 hover:border-gray-700 transition-colors">
+    <div className="flex items-start justify-between gap-4">
+      <div className="flex items-start gap-3">
+        <span className={`p-2 rounded-lg mt-0.5 ${active ? "bg-indigo-950 text-indigo-400" : "bg-gray-800 text-gray-600"}`}>
+          {icon}
+        </span>
+        <div>
+          <span className="text-sm font-medium text-white block">{title}</span>
+          <span className="text-xs text-gray-500 mt-0.5 block">{description}</span>
+        </div>
+      </div>
+      <button
+        onClick={onToggle}
+        aria-label={`Toggle ${title}`}
+        className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-indigo-500 flex-shrink-0 ${
+          active ? "bg-indigo-600" : "bg-gray-700"
         }`}
-      />
-    </button>
+      >
+        <span
+          className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+            active ? "translate-x-6" : "translate-x-1"
+          }`}
+        />
+      </button>
+    </div>
   </div>
 );
 
-const featureConfig: { key: ToggleKey; icon: React.ReactNode; title: string }[] = [
-  { key: "auth",       icon: <Shield size={18} />,   title: "Auth" },
-  { key: "database",   icon: <Database size={18} />, title: "Database" },
-  { key: "payments",   icon: <CreditCard size={18} />, title: "Payments" },
-  { key: "ai_copilot", icon: <Cpu size={18} />,      title: "AI Copilot" },
+const featureConfig: { key: ToggleKey; icon: React.ReactNode; title: string; description: string }[] = [
+  { key: "auth",       icon: <Shield size={18} />,     title: "Auth",       description: "Email, magic link & session management" },
+  { key: "database",   icon: <Database size={18} />,   title: "Database",   description: "PostgreSQL + pgvector with AI embeddings" },
+  { key: "payments",   icon: <CreditCard size={18} />, title: "Payments",   description: "Stripe, PayPal & Razorpay via one connector" },
+  { key: "ai_copilot", icon: <Cpu size={18} />,        title: "AI Copilot", description: "Autonomous assistant with stuck mode" },
 ];
 
-const navItems: { key: SectionKey; icon: React.ReactNode; label: string }[] = [
-  { key: "overview",  icon: <LayoutDashboard size={17} />, label: "Overview" },
-  { key: "toggles",   icon: <Settings size={17} />,        label: "Magic Toggles" },
-  { key: "copilot",   icon: <Cpu size={17} />,             label: "AI Copilot" },
-  { key: "payments",  icon: <CreditCard size={17} />,      label: "Payments" },
-  { key: "canvas",    icon: <Database size={17} />,        label: "Quantum Canvas" },
+const MAX_QUERY_LENGTH = 2000;
+
+const CURRENCIES: { code: CurrencyCode; symbol: string; label: string }[] = [
+  { code: "USD", symbol: "$", label: "USD — US Dollar" },
+  { code: "EUR", symbol: "€", label: "EUR — Euro" },
+  { code: "GBP", symbol: "£", label: "GBP — British Pound" },
+  { code: "INR", symbol: "₹", label: "INR — Indian Rupee" },
+];
+
+const PAYMENT_PROVIDERS = [
+  { key: "stripe",   label: "Stripe",   envHint: "QORE_PAYMENTS_STRIPE_ENABLED" },
+  { key: "paypal",   label: "PayPal",   envHint: "QORE_PAYMENTS_PAYPAL_ENABLED" },
+  { key: "razorpay", label: "Razorpay", envHint: "QORE_PAYMENTS_RAZORPAY_ENABLED" },
 ];
 
 export default function DashboardPage() {
@@ -98,8 +116,11 @@ export default function DashboardPage() {
   const [response, setResponse] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [copied, setCopied] = useState(false);
+  const [chatHistory, setChatHistory] = useState<{ q: string; a: string; stuck: boolean }[]>([]);
 
   const [paymentAmount, setPaymentAmount] = useState("");
+  const [paymentCurrency, setPaymentCurrency] = useState<CurrencyCode>("USD");
   const [paymentResult, setPaymentResult] = useState<string | null>(null);
   const [paymentError, setPaymentError] = useState<string | null>(null);
   const [paymentLoading, setPaymentLoading] = useState(false);
@@ -123,12 +144,27 @@ export default function DashboardPage() {
         body: JSON.stringify({ query, stuck }),
       });
       const data = await res.json();
-      if (!res.ok) setError(data.error ?? "Something went wrong.");
-      else setResponse(data.answer);
+      if (!res.ok) {
+        setError(data.error ?? "Something went wrong.");
+      } else {
+        setResponse(data.answer);
+        setChatHistory((prev) => [{ q: query, a: data.answer, stuck }, ...prev.slice(0, 4)]);
+        setQuery("");
+      }
     } catch {
       setError("Network error. Please try again.");
     } finally {
       setLoading(false);
+    }
+  }
+
+  async function handleCopyResponse(text: string) {
+    try {
+      await navigator.clipboard.writeText(text);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch {
+      // clipboard API not available
     }
   }
 
@@ -146,7 +182,7 @@ export default function DashboardPage() {
       const res = await fetch("/api/connectors/payments", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ amount }),
+        body: JSON.stringify({ amount, currency: paymentCurrency }),
       });
       const data = await res.json();
       if (!res.ok) setPaymentError(data.error ?? "Payment failed.");
@@ -159,6 +195,16 @@ export default function DashboardPage() {
   }
 
   const activeCount = Object.values(manifest.magic_toggles).filter(Boolean).length;
+
+  const navItems: { key: SectionKey; icon: React.ReactNode; label: string; badge?: number }[] = [
+    { key: "overview",  icon: <LayoutDashboard size={17} />, label: "Overview" },
+    { key: "toggles",   icon: <Settings size={17} />,        label: "Magic Toggles", badge: activeCount },
+    { key: "copilot",   icon: <Cpu size={17} />,             label: "AI Copilot",    badge: chatHistory.length > 0 ? chatHistory.length : undefined },
+    { key: "payments",  icon: <CreditCard size={17} />,      label: "Payments" },
+    { key: "canvas",    icon: <Database size={17} />,        label: "Quantum Canvas" },
+  ];
+
+  const selectedCurrency = CURRENCIES.find((c) => c.code === paymentCurrency)!;
 
   return (
     <div className="min-h-screen flex bg-gray-950">
@@ -193,7 +239,7 @@ export default function DashboardPage() {
 
         {/* Nav */}
         <nav className="flex-1 px-3 py-4 space-y-1 overflow-y-auto">
-          {navItems.map(({ key, icon, label }) => (
+          {navItems.map(({ key, icon, label, badge }) => (
             <button
               key={key}
               onClick={() => { setActiveSection(key); setSidebarOpen(false); }}
@@ -204,8 +250,15 @@ export default function DashboardPage() {
               }`}
             >
               {icon}
-              {label}
-              {activeSection === key && <ChevronRight size={14} className="ml-auto" />}
+              <span className="flex-1 text-left">{label}</span>
+              {badge !== undefined && badge > 0 && (
+                <span className={`text-xs font-semibold px-1.5 py-0.5 rounded-full ${
+                  activeSection === key ? "bg-indigo-600/40 text-indigo-300" : "bg-gray-700 text-gray-400"
+                }`}>
+                  {badge}
+                </span>
+              )}
+              {activeSection === key && <ChevronRight size={14} className="ml-auto shrink-0" />}
             </button>
           ))}
         </nav>
@@ -238,13 +291,19 @@ export default function DashboardPage() {
               {navItems.find((n) => n.key === activeSection)?.label}
             </h1>
           </div>
-          <button
-            onClick={handleSignOut}
-            className="hidden md:flex items-center gap-2 text-sm text-gray-400 hover:text-white transition-colors"
-          >
-            <LogOut size={15} />
-            Sign out
-          </button>
+          <div className="flex items-center gap-3">
+            <span className="hidden sm:flex items-center gap-1.5 text-xs text-gray-500 bg-gray-900 border border-gray-800 px-2.5 py-1 rounded-full">
+              <span className="w-1.5 h-1.5 rounded-full bg-green-400" />
+              {activeCount} active
+            </span>
+            <button
+              onClick={handleSignOut}
+              className="hidden md:flex items-center gap-2 text-sm text-gray-400 hover:text-white transition-colors"
+            >
+              <LogOut size={15} />
+              Sign out
+            </button>
+          </div>
         </header>
 
         {/* Page body */}
@@ -253,9 +312,9 @@ export default function DashboardPage() {
           {/* Overview */}
           {activeSection === "overview" && (
             <div className="space-y-6">
-              <div>
-                <p className="text-gray-400 text-sm">Welcome back to your AI-native backend platform.</p>
-              </div>
+              <p className="text-gray-400 text-sm">Welcome back to your AI-native backend platform.</p>
+
+              {/* Feature status cards */}
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
                 {featureConfig.map(({ key, icon, title }) => (
                   <div
@@ -276,7 +335,33 @@ export default function DashboardPage() {
                   </div>
                 ))}
               </div>
+
+              {/* Quick actions */}
               <div className="bg-gray-900 border border-gray-800 rounded-xl p-5">
+                <div className="flex items-center gap-2 mb-4">
+                  <Zap size={16} className="text-indigo-400" />
+                  <h2 className="text-sm font-semibold text-white">Quick Actions</h2>
+                </div>
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                  {navItems.filter((n) => n.key !== "overview").map(({ key, icon, label }) => (
+                    <button
+                      key={key}
+                      onClick={() => setActiveSection(key)}
+                      className="flex flex-col items-center gap-2 p-3 rounded-lg bg-gray-800 hover:bg-gray-700 border border-gray-700 hover:border-gray-600 transition-colors text-gray-300 hover:text-white"
+                    >
+                      <span className="text-indigo-400">{icon}</span>
+                      <span className="text-xs font-medium text-center">{label}</span>
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* System info */}
+              <div className="bg-gray-900 border border-gray-800 rounded-xl p-5">
+                <div className="flex items-center gap-2 mb-3">
+                  <BarChart3 size={16} className="text-indigo-400" />
+                  <h2 className="text-sm font-semibold text-white">System Info</h2>
+                </div>
                 <p className="text-sm text-gray-400">
                   Project: <span className="text-white font-medium">{manifest.project.name}</span>
                   {" · "}
@@ -285,6 +370,7 @@ export default function DashboardPage() {
                   <span className="text-indigo-400 font-medium">{activeCount} of {featureConfig.length} features active</span>
                 </p>
               </div>
+
               <QoreConsole />
             </div>
           )}
@@ -296,6 +382,9 @@ export default function DashboardPage() {
                 <div className="flex items-center gap-2 mb-1">
                   <Settings size={18} className="text-indigo-400" />
                   <h2 className="text-lg font-semibold text-white">Magic Toggles</h2>
+                  <span className="ml-auto text-xs text-indigo-400 font-semibold bg-indigo-950/40 border border-indigo-800/40 px-2 py-0.5 rounded-full">
+                    {activeCount}/{featureConfig.length} active
+                  </span>
                 </div>
                 <p className="text-sm text-gray-400 mb-5">
                   Enable or disable platform features for{" "}
@@ -303,16 +392,25 @@ export default function DashboardPage() {
                   Changes trigger the QoreOrchestrator to re-provision your stack.
                 </p>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                  {featureConfig.map(({ key, icon, title }) => (
+                  {featureConfig.map(({ key, icon, title, description }) => (
                     <FeatureCard
                       key={key}
                       icon={icon}
                       title={title}
+                      description={description}
                       active={manifest.magic_toggles[key]}
                       onToggle={() => toggleFeature(key)}
                     />
                   ))}
                 </div>
+              </div>
+
+              {/* Manifest preview */}
+              <div className="bg-gray-900 border border-gray-800 rounded-xl p-5">
+                <p className="text-xs text-gray-500 mb-2 font-semibold uppercase tracking-widest">qf-manifest.json preview</p>
+                <pre className="text-xs text-green-300 font-mono bg-gray-950 rounded-lg p-4 overflow-x-auto">
+                  {JSON.stringify(manifest, null, 2)}
+                </pre>
               </div>
             </div>
           )}
@@ -327,13 +425,17 @@ export default function DashboardPage() {
                   <strong className="text-indigo-400">Stuck mode</strong> for step-by-step breakdowns.
                 </p>
                 <form onSubmit={handleCopilot} className="space-y-4">
-                  <textarea
-                    value={query}
-                    onChange={(e) => setQuery(e.target.value)}
-                    rows={4}
-                    placeholder="e.g. How do I set up row-level security for a multi-tenant app?"
-                    className="w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-3 text-sm text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 resize-none"
-                  />
+                  <div className="relative">
+                    <textarea
+                      value={query}
+                      onChange={(e) => setQuery(e.target.value)}
+                      rows={4}
+                      maxLength={MAX_QUERY_LENGTH}
+                      placeholder="e.g. How do I set up row-level security for a multi-tenant app?"
+                      className="w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-3 text-sm text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 resize-none"
+                    />
+                    <span className="absolute bottom-2 right-3 text-xs text-gray-600">{query.length}/{MAX_QUERY_LENGTH}</span>
+                  </div>
                   <div className="flex items-center gap-3">
                     <label className="flex items-center gap-2 cursor-pointer select-none">
                       <input
@@ -357,9 +459,48 @@ export default function DashboardPage() {
                   <div className="mt-6 p-4 bg-red-900/30 border border-red-800 rounded-lg text-sm text-red-300">{error}</div>
                 )}
                 {response && (
-                  <div className="mt-6 p-4 bg-gray-800 border border-gray-700 rounded-lg text-sm text-gray-200 whitespace-pre-wrap leading-relaxed">{response}</div>
+                  <div className="mt-6">
+                    <div className="flex items-center justify-between mb-2">
+                      <span className="text-xs text-gray-500 font-semibold uppercase tracking-wide">Response</span>
+                      <button
+                        onClick={() => handleCopyResponse(response)}
+                        className="flex items-center gap-1.5 text-xs text-gray-400 hover:text-white transition-colors"
+                      >
+                        {copied ? <CheckCheck size={13} className="text-green-400" /> : <Copy size={13} />}
+                        {copied ? "Copied!" : "Copy"}
+                      </button>
+                    </div>
+                    <div className="p-4 bg-gray-800 border border-gray-700 rounded-lg text-sm text-gray-200 whitespace-pre-wrap leading-relaxed">{response}</div>
+                  </div>
                 )}
               </div>
+
+              {/* Session history */}
+              {chatHistory.length > 0 && (
+                <div className="bg-gray-900 border border-gray-800 rounded-xl p-5">
+                  <div className="flex items-center justify-between mb-4">
+                    <h3 className="text-sm font-semibold text-white">Session History</h3>
+                    <button
+                      onClick={() => setChatHistory([])}
+                      className="text-xs text-gray-500 hover:text-gray-300 transition-colors"
+                    >
+                      Clear
+                    </button>
+                  </div>
+                  <div className="space-y-4">
+                    {chatHistory.map((item, i) => (
+                      <div key={i} className="border-l-2 border-indigo-800/50 pl-4 space-y-2">
+                        <p className="text-xs text-gray-400">
+                          <span className="font-semibold text-indigo-400">Q:</span>{" "}
+                          {item.q}
+                          {item.stuck && <span className="ml-2 text-xs text-yellow-500">[Stuck mode]</span>}
+                        </p>
+                        <p className="text-xs text-gray-500 line-clamp-3">{item.a}</p>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
           )}
 
@@ -373,12 +514,38 @@ export default function DashboardPage() {
                   <code className="text-indigo-400 text-xs bg-gray-800 px-1.5 py-0.5 rounded">QoreConnector</code>
                   {" "}— one interface for Stripe, PayPal, and Razorpay.
                 </p>
-                <p className="text-xs text-gray-500 mb-6">
+                <p className="text-xs text-gray-500 mb-5">
                   Enable providers via env vars (<code className="text-gray-400">QORE_PAYMENTS_STRIPE_ENABLED=true</code>, etc.).
                 </p>
-                <form onSubmit={handlePayment} className="flex items-end gap-3">
-                  <div className="flex-1">
-                    <label className="block text-xs text-gray-400 mb-1">Amount (USD)</label>
+
+                {/* Provider chips */}
+                <div className="flex flex-wrap gap-2 mb-6">
+                  {PAYMENT_PROVIDERS.map(({ key, label }) => (
+                    <span
+                      key={key}
+                      className="flex items-center gap-1.5 text-xs px-2.5 py-1 rounded-full bg-gray-800 border border-gray-700 text-gray-400"
+                    >
+                      <span className="w-1.5 h-1.5 rounded-full bg-gray-600" />
+                      {label}
+                    </span>
+                  ))}
+                </div>
+
+                <form onSubmit={handlePayment} className="flex flex-col sm:flex-row items-end gap-3">
+                  <div>
+                    <label className="block text-xs text-gray-400 mb-1">Currency</label>
+                    <select
+                      value={paymentCurrency}
+                      onChange={(e) => setPaymentCurrency(e.target.value as CurrencyCode)}
+                      className="bg-gray-800 border border-gray-700 rounded-lg px-3 py-2.5 text-sm text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                    >
+                      {CURRENCIES.map((c) => (
+                        <option key={c.code} value={c.code}>{c.label}</option>
+                      ))}
+                    </select>
+                  </div>
+                  <div className="flex-1 w-full sm:w-auto">
+                    <label className="block text-xs text-gray-400 mb-1">Amount ({selectedCurrency.symbol})</label>
                     <input
                       type="number"
                       min="0.01"
